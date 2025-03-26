@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus connect</title>
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+
+</head>
+<body>
+    <nav class="fixed top-0 left-0 w-full bg-gray-800 p-4 flex justify-between items-center shadow-lg z-50">
+        <strong class="font-bold">
+            <a href="index.html" class="pr-[100px] text-white">BusConnect</a>
+        </strong>
+        <ul class="flex items-center text-white space-x-4">
+            <li><a href="login.html" class="hover:text-gray-400">Login As Operator</a></li>
+        </ul>
+    </nav>
+    
+    <body class="bg-gradient-to-r bg-gray-600 min-h-screen">
+       <div class="relative">
+
+    <div class="images -mt-20">
+        <img src="1628893.jpg" alt="bus" class="w-full h-[500px] object-cover blur-sm filter">
+
+    </div>
+
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+    bg-black/30 p-6 rounded-lg shadow-2xl shadow-black shadow-opacity-100">
+
+        <div class="flex flex-col justify-center items-center gap-4">
+            <input type="text" id="from" class="w-80 py-2 px-3 border border-gray-400 rounded-lg text-black" placeholder="From">
+            <input type="text" id="destination" class="w-80 py-2 px-4 border rounded-lg text-black" placeholder="Destination">
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Search</button>
+        </div>
+    </div>
+</div>
+
+        
+    </body>
+    
+
+</body>
+
+</html>

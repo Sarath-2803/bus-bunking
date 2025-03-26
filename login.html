@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>login</title>
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="fixed top-0 left-0 w-full bg-gray-800 p-4 flex justify-between items-center shadow-lg z-50">
+        <strong class="font-bold">
+            <a href="index.html" class="pr-[100px] text-white">BusConnect</a>
+        </strong>
+        <ul class="flex items-center text-white space-x-4">
+            <li><a href="index.html" class="hover:text-gray-400">Home</a></li>
+        </ul>
+    </nav>
+    <body class="bg-[url('your-image.jpg')] bg-cover bg-center min-h-screen">
+
+
+
+    
+        <div class="flex justify-center items-center min-h-screen bg-gray-600 dark:bg-gray-800">
+            <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
+                <form action="/login" method="post" class="flex flex-col items-center">
+                    <div class="flex flex-col items-start w-full">
+                        <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300 self-start">
+                            Email
+                        </label>
+                        <input type="email" id="email" name="email" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg 
+                            focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 
+                            dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white 
+                            dark:focus:ring-blue-500 dark:focus:border-blue-500" required>
+                    </div>
+                    
+        
+                    <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300 self-start">
+                        Password
+                    </label>
+                    <input type="password" id="password" name="password" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg 
+                        focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 
+                        dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white 
+                        dark:focus:ring-blue-500 dark:focus:border-blue-500" required>
+        
+
+                    <button type="submit" id="submit" class="mt-4 ring-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 
+                        font-medium rounded-lg text-sm px-5 py-2.5 text-center 
+                        dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                        Submit
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+</body>
+
+</body>
+</html>
