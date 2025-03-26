@@ -1,245 +1,135 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
-import { firestore } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
-import { getAuth, signinWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
-import { query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
 
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBaTbi1991gm29Mkg8fF7SzrhwmR35Lg6o",
     authDomain: "bus-connect-1b577.firebaseapp.com",
     projectId: "bus-connect-1b577",
-    storageBucket: "bus-connect-1b577.firebasestorage.app",
+    storageBucket: "bus-connect-1b577.appspot.com",
     messagingSenderId: "389708422203",
     appId: "1:389708422203:web:910ce222b141a55e6c501e"
-  };
+};
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const firestore= firebase.firestore(app);
-const db = getFirestore();
-const auth = getAuth();
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-//user 
-const travellingfrom = document.getElementById('travellingfrom');
-const travellingto = document.getElementById('travellingto');
+// DOM Elements
+const fromInput = document.getElementById('from');
+const destinationInput = document.getElementById('destination');
+const searchBtn = document.getElementById('search-btn');
+const resultsSection = document.getElementById('results-section');
+const busResults = document.getElementById('bus-results');
+const loadingIndicator = document.getElementById('loading');
+const noBusesMessage = document.getElementById('no-buses');
 
-//operator
-const todestination = document.getElementById('todestination');
-const fromdestination = document.getElementById('fromdestination');
-const id = document.getElementById('id');
+// Search buses by route
+async function searchBuses() {
+    const from = fromInput.value.trim().toLowerCase();
+    const destination = destinationInput.value.trim().toLowerCase();
+    
+    if (!from || !destination) {
+        alert("Please enter both starting point and destination");
+        return;
+    }
 
-//operator login
+    try {
+        // Show loading state
+        busResults.innerHTML = '';
+        resultsSection.classList.remove('hidden');
+        loadingIndicator.classList.remove('hidden');
+        noBusesMessage.classList.add('hidden');
+
+        // Query Firestore for buses that include both locations in their route
+        const busRoutesRef = collection(db, "busRoutes");
+        const querySnapshot = await getDocs(busRoutesRef);
+
+        // Hide loading indicator
+        loadingIndicator.classList.add('hidden');
+
+        const matchingBuses = [];
+        
+        querySnapshot.forEach((doc) => {
+            const busData = doc.data();
+            const routePath = busData.routePath?.map(loc => loc.toLowerCase()) || [];
+            
+            const fromIndex = routePath.indexOf(from);
+            const destIndex = routePath.indexOf(destination);
+            
+            // Check if both locations exist and are in correct order
+            if (fromIndex !== -1 && destIndex !== -1 && fromIndex < destIndex) {
+                matchingBuses.push({
+                    id: doc.id,
+                    ...busData
+                });
+            }
+        });
+
+        if (matchingBuses.length === 0) {
+            noBusesMessage.classList.remove('hidden');
+            return;
+        }
+
+        // Display matching buses
+        matchingBuses.forEach(bus => {
+            const busItem = document.createElement('li');
+            busItem.className = 'bg-white p-4 rounded-lg shadow-md';
+            
+            busItem.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">${bus.busNumber || 'Bus ' + bus.id}</h3>
+                        <p class="text-sm text-gray-600 mt-1">
+                            <span class="font-medium">Operator:</span> ${bus.operatorName || 'Unknown'}
+                        </p>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-700">
+                                <span class="font-medium">Route:</span> ${bus.routePath?.join(' → ') || 'Not specified'}
+                            </p>
+                            <p class="text-sm text-gray-700 mt-1">
+                                <span class="font-medium">Departure:</span> ${bus.departureTime || 'N/A'}
+                            </p>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                        ${bus.status === 'Active' ? 'bg-green-100 text-green-800' : 
+                          bus.status === 'Maintenance' ? 'bg-yellow-100 text-yellow-800' : 
+                          'bg-gray-100 text-gray-800'}">
+                        ${bus.status || 'Unknown'}
+                    </span>
+                </div>
+                <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+                    <div class="bg-blue-50 p-2 rounded">
+                        <span class="font-medium text-blue-700">Fare:</span> ${bus.fare ? '₹' + bus.fare : 'N/A'}
+                    </div>
+                    <div class="bg-purple-50 p-2 rounded">
+                        <span class="font-medium text-purple-700">Capacity:</span> ${bus.capacity || 'N/A'}
+                    </div>
+                </div>
+            `;
+            busResults.appendChild(busItem);
+        });
+
+    } catch (error) {
+        console.error("Error searching buses:", error);
+        loadingIndicator.classList.add('hidden');
+        alert("Failed to search for buses. Please try again.");
+    }
+}
+
+// Event Listeners
+searchBtn.addEventListener('click', searchBuses);
+
+// Operator login function (unchanged)
 async function login(email, password) {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         console.log("User logged in:", userCredential.user);
         window.location.href = "operator.html";
     } catch (error) {
-        alert("Login failed !");
+        alert("Login failed: " + error.message);
     }
-}
-
-//operator page code
-/// Function to find buses with a common last element in the routePath array
-async function findBusesGroupedByLastElement() {
-    try {
-        // Reference the "busRoutes" collection
-        const busRoutesRef = collection(db, "busRoutes");
-
-        // Fetch all bus routes
-        const querySnapshot = await getDocs(busRoutesRef);
-
-        // Object to group buses by their last element
-        const busesByLastElement = {};
-
-        // Iterate through the documents to group buses by the last element of routePath
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const routePath = data.routePath; // Array of locations (e.g., ["A", "B", "C", "D"])
-
-            if (routePath && routePath.length > 0) {
-                const lastElement = routePath[routePath.length - 1]; // Get the last element of the array
-
-                // Initialize the set for this destination if it doesn't exist
-                if (!busesByLastElement[lastElement]) {
-                    busesByLastElement[lastElement] = new Set();
-                }
-
-                // Add the bus ID to the set for this destination
-                busesByLastElement[lastElement].add(doc.id);
-            }
-        });
-
-        // Convert sets to arrays for the final output
-        const formattedResult = {};
-        for (const [lastElement, ids] of Object.entries(busesByLastElement)) {
-            formattedResult[lastElement] = Array.from(ids);
-        }
-
-        // Log the grouped buses
-        console.log("Buses Grouped by Last Element:", formattedResult);
-    }
-}
-
-        //alert("Buses grouped by their last element have been logged to the console.");
-        //return formattedResult; // Return the grouped object if needed elsewhere
-    /* catch (e) {
-        console.error("Error finding buses with a common last element:", e);
-        alert("Failed to find buses with a common last element.");
-    } */
-
-
-
-//location of destination
-// Function to fetch GPS coordinates for a place using OpenStreetMap Nominatim API
-// Function to fetch GPS coordinates for a place using OpenStreetMap Nominatim API
-async function getGPSLocationForPlace(place) {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-        place
-    )}&format=json&limit=1`;
-
-    try {
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.length > 0) {
-            const location = data[0];
-            return { latitude: parseFloat(location.lat), longitude: parseFloat(location.lon) };
-        } else {
-            console.error(`No GPS location found for place: ${place}`);
-            return null;
-        }
-    } catch (error) {
-        console.error(`Error fetching GPS location for place: ${place}`, error);
-        return null;
-    }
-}
-
-
-
-/*
-//uploading operator data
-async function uploadData(){
-    const docRef = await addDoc(collection(db, "busRoutes"), {
-        id: id
-    });
-}  */
-
-  /*  // Function to search for bus routes and find the current location of the operator
-    async function searchBusRouteAndFindOperatorLocation() {
-        try {
-            // Get the values from the input fields
-            const from = travellingfrom.value.trim();
-            const to = travellingto.value.trim();
-    
-            // Reference the "busRoutes" collection
-            const busRoutesRef = collection(db, "busRoutes");
-    
-            // Fetch all bus routes
-            const querySnapshot = await getDocs(busRoutesRef);
-    
-            let matchingBuses = [];
-    
-            // Iterate through the documents to find matching routes
-            for (const doc of querySnapshot.docs) {
-                const data = doc.data();
-                const routePath = data.routePath; // Array of locations (e.g., ["A", "B", "C", "D"])
-    
-                if (routePath) {
-                    const fromIndex = routePath.indexOf(from);
-                    const toIndex = routePath.indexOf(to);
-    
-                    // Check if both locations exist in the route and are in the correct order
-                    if (fromIndex !== -1 && toIndex !== -1 && fromIndex < toIndex) {
-                        matchingBuses.push({
-                            id: doc.id,
-                            routePath: routePath,
-                            starting: data.starting,
-                            Destination: data.Destination,
-                            operatorId: data.operatorId, // Assuming operatorId is stored in the busRoutes collection
-                        });
-                    }
-                }
-            }
-    
-            // Check if any buses match the criteria
-            if (matchingBuses.length === 0) {
-                alert("No matching bus routes found.");
-                return;
-            }
-    
-            console.log("Matching Buses:", matchingBuses);
-    
-            // Fetch the current location of each operator
-            for (const bus of matchingBuses) {
-                const operatorId = bus.operatorId;
-    
-                if (operatorId) {
-                    // Reference the "operators" collection to get the current location
-                    const operatorDocRef = doc(db, "operators", operatorId);
-                    const operatorDoc = await getDoc(operatorDocRef);
-    
-                    if (operatorDoc.exists()) {
-                        const operatorData = operatorDoc.data();
-                        console.log(`Operator ID: ${operatorId}, Current Location:`, operatorData.currentLocation);
-                    } else {
-                        console.log(`Operator with ID ${operatorId} not found.`);
-                    }
-                } else {
-                    console.log(`No operator ID found for bus route ID: ${bus.id}`);
-                }
-            }
-    
-            alert(`Found ${matchingBuses.length} matching bus route(s)! Check the console for details.`);
-        } catch (e) {
-            console.error("Error searching for bus routes and operator locations:", e);
-            alert("Failed to search for bus routes and operator locations.");
-        }
-    }
-        */
-
-async function getData() {
-    try {
-        // Reference the "busRoutes" collection
-        const querySnapshot = await getDocs(collection(db, "busRoutes"));
-
-        // Iterate through the documents and log their data
-        querySnapshot.forEach((doc) => {
-            console.log(`${doc.id} =>`, doc.data());
-        });
-
-        alert("Data fetched successfully! Check the console for details.");
-    } catch (e) {
-        console.error("Error fetching documents: ", e);
-        alert("Failed to fetch data.");
-    }
-}
-
-// Function to get the user's current GPS location
-function getCurrentLocation() {
-    return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-            reject("Geolocation is not supported by your browser.");
-        } else {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
-                    resolve({ latitude, longitude });
-                },
-                (error) => {
-                    reject("Unable to retrieve location: " + error.message);
-                }
-            );
-        }
-    });
-}
-
-
-const location = async () =>{
-    return await getCurrentLocation();
 }
