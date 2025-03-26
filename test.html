@@ -3,812 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kerala Bus Tracker</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <style>
-        #map { height: 400px; }
-        .bus-marker { background-color: #3b82f6; width: 12px; height: 12px; border-radius: 50%; }
-        .stop-marker { background-color: #ef4444; width: 10px; height: 10px; border-radius: 50%; }
-        .user-marker { background-color: #10b981; width: 14px; height: 14px; border-radius: 50%; }
-        .request-marker { background-color: #8b5cf6; width: 14px; height: 14px; border-radius: 50%; }
-        .delay-pulse {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.6; }
-            100% { opacity: 1; }
-        }
-    </style>
+    <title>Operator Dashboard</title>
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="operator.js" type="module"></script>
+
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-center mb-2">Kerala Bus Tracker</h1>
-        <p class="text-center text-gray-600 mb-8">Current time: <span id="current-time" class="font-medium"></span></p>
-        
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-gray-700 mb-2">From</label>
-                    <select id="from-input" class="w-full p-2 border rounded-lg">
-                        <option value="Kottayam">Kottayam</option>
-                        <option value="Ernakulam">Ernakulam</option>
-                        <option value="Thrissur">Thrissur</option>
-                        <option value="Alappuzha">Alappuzha</option>
-                        <option value="Kollam">Kollam</option>
-                        <option value="Trivandrum" selected>Trivandrum</option>
-                        <option value="Kozhikode">Kozhikode</option>
-                        <option value="Kannur">Kannur</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-gray-700 mb-2">To</label>
-                    <select id="to-input" class="w-full p-2 border rounded-lg">
-                        <option value="Kottayam">Kottayam</option>
-                        <option value="Ernakulam">Ernakulam</option>
-                        <option value="Thrissur">Thrissur</option>
-                        <option value="Alappuzha">Alappuzha</option>
-                        <option value="Kollam">Kollam</option>
-                        <option value="Trivandrum" selected>Trivandrum</option>
-                        <option value="Kozhikode">Kozhikode</option>
-                        <option value="Kannur">Kannur</option>
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button id="search-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                        </svg>
-                        Search Buses
-                    </button>
-                </div>
-                <div class="flex items-end">
-                    <button id="locate-btn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-                        </svg>
-                        Find Nearest Bus
-                    </button>
-                </div>
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="bg-gray-800 p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-white font-bold text-xl"><i class="fas fa-bus mr-2"></i>BusConnect</a>
+            <button id="logout-btn" class="text-white hover:text-gray-300 hidden">
+                Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Operator ID Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 max-w-md mx-auto">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Operator Dashboard</h1>
+            
+            <div class="mb-4">
+                <label for="operator-id" class="block text-gray-700 mb-2">Operator ID</label>
+                <input type="text" id="operator-id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter your operator ID">
             </div>
+            
+            <button id="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
+                Get Bus Information
+            </button>
         </div>
 
-        <!-- Nearest Bus Info Card -->
-        <div id="nearest-bus-card" class="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded-r-lg hidden">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h3 class="font-bold text-lg text-green-800">Nearest Bus to You</h3>
-                    <p id="nearest-bus-info" class="text-green-700"></p>
-                    <p id="nearest-bus-eta" class="text-green-700 font-medium mt-1"></p>
-                    <button id="request-stop-btn" class="mt-2 bg-purple-600 hover:bg-purple-700 text-white py-1 px-3 rounded text-sm">
-                        Request Bus Stop
-                    </button>
-                </div>
-                <button id="close-nearest" class="text-green-600 hover:text-green-800">
+        <!-- Bus List Display -->
+        <div id="bus-list" class="mt-8 bg-white rounded-lg shadow-md p-6 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Your Assigned Buses</h2>
+                <button id="refresh-btn" class="text-blue-600 hover:text-blue-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                 </button>
             </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2">
-                <div id="map" class="rounded-lg shadow-md"></div>
+            
+            <div id="loading" class="text-center py-4 hidden">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p class="mt-2 text-gray-600">Loading bus information...</p>
             </div>
             
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-bold mb-4">Available Buses</h2>
-                <div id="loading" class="text-center py-8">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                    <p class="mt-2">Loading bus information...</p>
+            <ul id="bus-container" class="divide-y divide-gray-200">
+                <!-- Bus items will be inserted here by JavaScript -->
+            </ul>
+            
+            <div id="no-buses" class="text-center py-8 hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                <p class="mt-2 text-gray-600">No buses assigned to this operator</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Current Location Section -->
+    <div id="location-section" class="container mx-auto px-4 py-8 hidden">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Current Location</h2>
+            <div class="flex items-center space-x-4">
+                <div id="location-status" class="flex items-center">
+                    <span class="relative flex h-3 w-3 mr-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-gray-500"></span>
+                    </span>
+                    <span>Location not available</span>
                 </div>
-                <div id="no-results" class="text-center py-8 hidden">
-                    <p>No buses available for this route at this time</p>
+                <button id="update-location" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-3 rounded-lg text-sm">
+                    Update Location
+                </button>
+            </div>
+            <div id="location-details" class="mt-4 hidden">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-gray-600">Latitude:</p>
+                        <p id="latitude" class="font-medium">-</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Longitude:</p>
+                        <p id="longitude" class="font-medium">-</p>
+                    </div>
                 </div>
-                <div id="results-container" class="space-y-4"></div>
+                <p id="location-address" class="mt-2 text-gray-600 italic">Resolving address...</p>
             </div>
         </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        // City coordinates for Kerala
-        const cityCoordinates = {
-            'Kottayam': [9.5916, 76.5222],
-            'Ernakulam': [9.9312, 76.2673],
-            'Thrissur': [10.5276, 76.2144],
-            'Alappuzha': [9.4980, 76.3388],
-            'Kollam': [8.8932, 76.6141],
-            'Trivandrum': [8.5241, 76.9366],
-            'Kozhikode': [11.2588, 75.7804],
-            'Kannur': [11.8745, 75.3704]
-        };
-
-        // Initialize map centered on Kerala
-        const map = L.map('map').setView([10.8505, 76.2711], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-
-        // Sample bus data for different routes
-        const allBusRoutes = {
-            'Kottayam-Trivandrum': [
-                {
-                    id: 'B1',
-                    number: 'KL-15-2020',
-                    type: 'Super Fast',
-                    from: 'Kottayam',
-                    to: 'Trivandrum',
-                    route: ['Kottayam', 'Changanassery', 'Kollam', 'Trivandrum'],
-                    schedule: ['06:00', '08:30', '12:00', '15:30', '18:00'],
-                    currentLocation: [9.5916, 76.5222], // Kottayam coordinates
-                    nextStop: 'Changanassery',
-                    duration: '3h 30m',
-                    delay: 0,
-                    status: 'on_time',
-                    capacity: 45,
-                    fare: 120,
-                    speed: 40, // km/h
-                    operatorPhone: '+919876543210'
-                },
-                {
-                    id: 'B2',
-                    number: 'KL-01-4567',
-                    type: 'Express',
-                    from: 'Kottayam',
-                    to: 'Trivandrum',
-                    route: ['Kottayam', 'Ettumanoor', 'Adoor', 'Trivandrum'],
-                    schedule: ['07:15', '10:00', '13:45', '16:30', '19:15'],
-                    currentLocation: [9.67, 76.56], // Between Kottayam and Ettumanoor
-                    nextStop: 'Ettumanoor',
-                    duration: '4h',
-                    delay: 15,
-                    status: 'delayed',
-                    capacity: 52,
-                    fare: 100,
-                    speed: 35, // km/h
-                    operatorPhone: '+919876543211'
-                }
-            ],
-            'Ernakulam-Trivandrum': [
-                {
-                    id: 'B3',
-                    number: 'KL-07-3344',
-                    type: 'Deluxe',
-                    from: 'Ernakulam',
-                    to: 'Trivandrum',
-                    route: ['Ernakulam', 'Alappuzha', 'Kollam', 'Trivandrum'],
-                    schedule: ['05:30', '09:00', '14:30', '18:45'],
-                    currentLocation: [9.8, 76.4], // Between Ernakulam and Alappuzha
-                    nextStop: 'Alappuzha',
-                    duration: '5h',
-                    delay: 20,
-                    status: 'delayed',
-                    capacity: 36,
-                    fare: 150,
-                    speed: 45, // km/h
-                    operatorPhone: '+919876543212'
-                }
-            ],
-            'Thrissur-Kozhikode': [
-                {
-                    id: 'B4',
-                    number: 'KL-08-7788',
-                    type: 'Super Fast',
-                    from: 'Thrissur',
-                    to: 'Kozhikode',
-                    route: ['Thrissur', 'Shoranur', 'Tirur', 'Kozhikode'],
-                    schedule: ['06:15', '09:45', '13:15', '17:30', '20:00'],
-                    currentLocation: [10.7, 76.3], // Near Shoranur
-                    nextStop: 'Shoranur',
-                    duration: '4h 15m',
-                    delay: 10,
-                    status: 'delayed',
-                    capacity: 48,
-                    fare: 130,
-                    speed: 50, // km/h
-                    operatorPhone: '+919876543213'
-                }
-            ]
-        };
-
-        // Current bus routes being displayed
-        let currentBusRoutes = [];
-
-        // Map markers
-        const markers = {
-            buses: {},
-            stops: {},
-            user: null,
-            request: null
-        };
-
-        // Current user location and nearest bus info
-        let userLocation = null;
-        let nearestBusInfo = null;
-
-        // Update current time display
-        function updateCurrentTime() {
-            const now = new Date();
-            document.getElementById('current-time').textContent = 
-                now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-        }
-        setInterval(updateCurrentTime, 1000);
-        updateCurrentTime();
-
-        // Calculate arrival time at destination
-        function calculateArrivalTime(bus) {
-            const now = new Date();
-            const [hours, minutes] = bus.schedule[0].split(':').map(Number);
-            
-            // Find next departure time
-            let nextDeparture = new Date();
-            nextDeparture.setHours(hours, minutes, 0, 0);
-            
-            // If departure is tomorrow
-            if (nextDeparture < now) {
-                nextDeparture.setDate(nextDeparture.getDate() + 1);
-            }
-            
-            // Calculate arrival time
-            const [durHours, durMinutes] = bus.duration.match(/\d+/g).map(Number);
-            const arrivalTime = new Date(nextDeparture);
-            arrivalTime.setHours(arrivalTime.getHours() + durHours);
-            arrivalTime.setMinutes(arrivalTime.getMinutes() + durMinutes + bus.delay);
-            
-            return arrivalTime.toLocaleTimeString('en-IN', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-            });
-        }
-
-        // Calculate distance between two coordinates in km
-        function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Earth radius in km
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = 
-                Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-
-        // Find nearest bus to user's location
-        function findNearestBus(userLoc) {
-            let nearestBus = null;
-            let minDistance = Infinity;
-            let eta = 0;
-            
-            currentBusRoutes.forEach(bus => {
-                const distance = getDistance(
-                    userLoc.lat,
-                    userLoc.lng,
-                    bus.currentLocation[0],
-                    bus.currentLocation[1]
-                );
-                
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearestBus = bus;
-                    // Calculate ETA in minutes (distance / speed * 60)
-                    eta = Math.round((distance / bus.speed) * 60);
-                }
-            });
-            
-            return { bus: nearestBus, distance: minDistance, eta };
-        }
-
-        // Handle user location
-        function handleUserLocation(position) {
-            userLocation = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude
-            };
-            
-            // Add user marker to map
-            if (markers.user) {
-                map.removeLayer(markers.user);
-            }
-            
-            markers.user = L.marker([userLocation.lat, userLocation.lng], {
-                icon: L.divIcon({
-                    className: 'user-marker',
-                    iconSize: [14, 14]
-                })
-            }).addTo(map);
-            
-            markers.user.bindPopup("<b>Your Location</b>").openPopup();
-            
-            // Find nearest bus
-            nearestBusInfo = findNearestBus(userLocation);
-            
-            if (nearestBusInfo.bus) {
-                // Show nearest bus info
-                document.getElementById('nearest-bus-info').textContent = 
-                    `Bus ${nearestBusInfo.bus.number} (${nearestBusInfo.bus.type}) is ${nearestBusInfo.distance.toFixed(1)} km away`;
-                
-                document.getElementById('nearest-bus-eta').textContent = 
-                    `Estimated arrival to your location: ${nearestBusInfo.eta} minutes`;
-                
-                document.getElementById('nearest-bus-card').classList.remove('hidden');
-                
-                // Highlight the nearest bus on map
-                markers.buses[nearestBusInfo.bus.id].setIcon(
-                    L.divIcon({
-                        className: 'bus-marker',
-                        iconSize: [16, 16],
-                        html: '<div style="background-color: #f59e0b; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white"></div>'
-                    })
-                );
-                
-                // Zoom to show both user and nearest bus
-                const group = new L.featureGroup([markers.user, markers.buses[nearestBusInfo.bus.id]]);
-                map.fitBounds(group.getBounds().pad(0.5));
-            } else {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'No Buses Nearby',
-                    text: 'There are no buses on this route near your current location',
-                });
-            }
-        }
-
-        // Handle location error
-        function handleLocationError(error) {
-            let message = "Error getting your location";
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    message = "Location access was denied. Please enable location services.";
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    message = "Location information is unavailable.";
-                    break;
-                case error.TIMEOUT:
-                    message = "The request to get your location timed out.";
-                    break;
-            }
-            
-            Swal.fire({
-                icon: 'error',
-                title: 'Location Error',
-                text: message,
-            });
-        }
-
-        // Request bus stop
-        function requestBusStop() {
-            if (!userLocation || !nearestBusInfo || !nearestBusInfo.bus) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No bus selected or location not available',
-                });
-                return;
-            }
-
-            Swal.fire({
-                title: 'Request Bus Stop',
-                html: `
-                    <p>You're requesting Bus ${nearestBusInfo.bus.number} to stop at your location.</p>
-                    <p>Distance from bus: ${nearestBusInfo.distance.toFixed(1)} km</p>
-                    <p>ETA: ${nearestBusInfo.eta} minutes</p>
-                    <div class="mt-4">
-                        <label for="passenger-count" class="block text-sm text-gray-700">Number of passengers:</label>
-                        <select id="passenger-count" class="mt-1 block w-full p-2 border rounded-md">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4+</option>
-                        </select>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Send Request',
-                cancelButtonText: 'Cancel',
-                preConfirm: () => {
-                    const passengerCount = document.getElementById('passenger-count').value;
-                    return { passengerCount };
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const { passengerCount } = result.value;
-                    
-                    // In a real app, this would send a request to the bus operator
-                    // Here we'll simulate it with a success message
-                    
-                    // Add request marker to map
-                    if (markers.request) {
-                        map.removeLayer(markers.request);
-                    }
-                    
-                    markers.request = L.marker([userLocation.lat, userLocation.lng], {
-                        icon: L.divIcon({
-                            className: 'request-marker',
-                            iconSize: [14, 14]
-                        })
-                    }).addTo(map);
-                    
-                    markers.request.bindPopup(`
-                        <b>Bus Stop Request</b><br>
-                        Bus: ${nearestBusInfo.bus.number}<br>
-                        Passengers: ${passengerCount}
-                    `).openPopup();
-                    
-                    // Simulate sending SMS to bus operator
-                    const message = `New stop request: ${passengerCount} passenger(s) at your location in ${nearestBusInfo.eta} mins. Coordinates: ${userLocation.lat}, ${userLocation.lng}`;
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Request Sent!',
-                        html: `
-                            <p>Your request has been sent to Bus ${nearestBusInfo.bus.number} operator.</p>
-                            <p class="mt-2 text-sm text-gray-600">Operator will receive this message:</p>
-                            <div class="mt-1 p-2 bg-gray-100 rounded text-sm">${message}</div>
-                            <p class="mt-2 text-sm">Operator contact: ${nearestBusInfo.bus.operatorPhone}</p>
-                        `,
-                        confirmButtonText: 'OK'
-                    });
-                }
-            });
-        }
-
-        // Locate button click handler
-        document.getElementById('locate-btn').addEventListener('click', function() {
-            if (currentBusRoutes.length === 0) {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'No Buses Loaded',
-                    text: 'Please search for buses first',
-                });
-                return;
-            }
-            
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    handleUserLocation,
-                    handleLocationError,
-                    { enableHighAccuracy: true, timeout: 5000 }
-                );
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Not Supported',
-                    text: 'Geolocation is not supported by your browser',
-                });
-            }
-        });
-
-        // Close nearest bus card
-        document.getElementById('close-nearest').addEventListener('click', function() {
-            document.getElementById('nearest-bus-card').classList.add('hidden');
-            // Reset all bus markers to default
-            Object.values(markers.buses).forEach(marker => {
-                marker.setIcon(
-                    L.divIcon({
-                        className: 'bus-marker',
-                        iconSize: [12, 12]
-                    })
-                );
-            });
-            
-            // Remove request marker if exists
-            if (markers.request) {
-                map.removeLayer(markers.request);
-                markers.request = null;
-            }
-        });
-
-        // Request stop button
-        document.getElementById('request-stop-btn').addEventListener('click', requestBusStop);
-
-        // Display buses with arrival times
-        function displayBuses(buses) {
-            const container = document.getElementById('results-container');
-            const loading = document.getElementById('loading');
-            const noResults = document.getElementById('no-results');
-            
-            container.innerHTML = '';
-            loading.classList.remove('hidden');
-            noResults.classList.add('hidden');
-            
-            // Simulate API delay
-            setTimeout(() => {
-                loading.classList.add('hidden');
-                
-                if (buses.length === 0) {
-                    noResults.classList.remove('hidden');
-                    return;
-                }
-                
-                buses.forEach(bus => {
-                    const arrivalTime = calculateArrivalTime(bus);
-                    
-                    const busCard = document.createElement('div');
-                    busCard.className = `bg-gray-50 p-4 rounded-lg ${bus.status === 'delayed' ? 'border border-orange-300 delay-pulse' : ''}`;
-                    
-                    busCard.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-bold text-lg">Bus ${bus.number}</h3>
-                                <p class="text-gray-600">${bus.type}</p>
-                                <div class="mt-2">
-                                    <span class="inline-block ${bus.status === 'delayed' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'} text-xs px-2 py-1 rounded">
-                                        ${bus.status === 'delayed' ? `Delayed by ${bus.delay} min` : 'On time'}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-bold">₹${bus.fare}</p>
-                                <p class="text-sm text-gray-500">${bus.capacity} seats</p>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-4 mt-4">
-                            <div>
-                                <p class="text-sm text-gray-500">Next Stop</p>
-                                <p class="font-medium">${bus.nextStop}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Arrival at ${bus.to}</p>
-                                <p class="font-medium">${arrivalTime}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-4">
-                            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium" 
-                                    onclick="showBusDetails('${bus.id}')">
-                                View Full Route & Schedule
-                            </button>
-                        </div>
-                    `;
-                    
-                    container.appendChild(busCard);
-                });
-                
-                // Plot buses on map
-                plotBusesOnMap(buses);
-                
-            }, 800);
-        }
-
-        // Plot buses and stops on map
-        function plotBusesOnMap(buses) {
-            // Clear existing markers
-            Object.values(markers.buses).forEach(marker => map.removeLayer(marker));
-            Object.values(markers.stops).forEach(marker => map.removeLayer(marker));
-            markers.buses = {};
-            markers.stops = {};
-            
-            // Add bus markers
-            buses.forEach(bus => {
-                const marker = L.marker(bus.currentLocation, {
-                    icon: L.divIcon({
-                        className: 'bus-marker',
-                        iconSize: [12, 12]
-                    })
-                }).addTo(map);
-                
-                marker.bindPopup(`
-                    <b>Bus ${bus.number}</b><br>
-                    ${bus.type}<br>
-                    To: ${bus.to}<br>
-                    Next: ${bus.nextStop}<br>
-                    Status: ${bus.status === 'delayed' ? `Delayed by ${bus.delay} min` : 'On time'}
-                `);
-                
-                markers.buses[bus.id] = marker;
-            });
-            
-            // Add stop markers (simplified for demo)
-            buses.forEach(bus => {
-                bus.route.forEach((stop, index) => {
-                    // For demo, distribute stops between origin and destination
-                    const origin = cityCoordinates[bus.from];
-                    const destination = cityCoordinates[bus.to];
-                    const progress = index / (bus.route.length - 1);
-                    const stopCoords = [
-                        origin[0] + (destination[0] - origin[0]) * progress,
-                        origin[1] + (destination[1] - origin[1]) * progress
-                    ];
-                    
-                    if (!markers.stops[stop]) {
-                        markers.stops[stop] = L.marker(stopCoords, {
-                            icon: L.divIcon({
-                                className: 'stop-marker',
-                                iconSize: [10, 10]
-                            })
-                        }).addTo(map);
-                        
-                        markers.stops[stop].bindPopup(`<b>${stop}</b>`);
-                    }
-                });
-            });
-            
-            // Fit map to show all markers
-            const allMarkers = [...Object.values(markers.buses), ...Object.values(markers.stops)];
-            if (allMarkers.length > 0) {
-                const group = new L.featureGroup(allMarkers);
-                map.fitBounds(group.getBounds().pad(0.5));
-            }
-        }
-
-        // Show detailed bus information
-        window.showBusDetails = function(busId) {
-            const bus = currentBusRoutes.find(b => b.id === busId);
-            if (!bus) return;
-            
-            const arrivalTime = calculateArrivalTime(bus);
-            
-            Swal.fire({
-                title: `Bus ${bus.number} Details`,
-                html: `
-                    <div class="text-left">
-                        <p><b>Type:</b> ${bus.type}</p>
-                        <p><b>Route:</b> ${bus.from} → ${bus.to}</p>
-                        <p><b>Current Location:</b> Approaching ${bus.nextStop}</p>
-                        <p><b>Status:</b> ${bus.status === 'delayed' ? 
-                            `<span class="text-orange-600">Delayed by ${bus.delay} minutes</span>` : 
-                            '<span class="text-green-600">On time</span>'}</p>
-                        
-                        <div class="mt-4">
-                            <h4 class="font-bold mb-2">Estimated Arrival at ${bus.to}:</h4>
-                            <p class="text-xl font-medium">${arrivalTime}</p>
-                        </div>
-                        
-                        <div class="mt-4">
-                            <h4 class="font-bold mb-2">Full Route:</h4>
-                            <ol class="list-decimal pl-5">
-                                ${bus.route.map(stop => `<li>${stop}</li>`).join('')}
-                            </ol>
-                        </div>
-                        
-                        <div class="mt-4">
-                            <h4 class="font-bold mb-2">Schedule:</h4>
-                            <p>${bus.schedule.join(', ')}</p>
-                        </div>
-                        
-                        <div class="mt-4">
-                            <h4 class="font-bold mb-2">Operator Contact:</h4>
-                            <p>${bus.operatorPhone}</p>
-                        </div>
-                    </div>
-                `,
-                confirmButtonText: 'Close',
-                footer: '<button onclick="requestSpecificBusStop(\'' + bus.id + '\')" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm">Request Stop for This Bus</button>'
-            });
-        }
-
-        // Request stop for specific bus
-        window.requestSpecificBusStop = function(busId) {
-            const bus = currentBusRoutes.find(b => b.id === busId);
-            if (!bus) return;
-            
-            if (!userLocation) {
-                Swal.fire({
-                    title: 'Need Your Location',
-                    text: 'Please allow location access to request a bus stop',
-                    icon: 'info',
-                    showCancelButton: true,
-                    confirmButtonText: 'Share Location',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        if (navigator.geolocation) {
-                            navigator.geolocation.getCurrentPosition(
-                                (position) => {
-                                    userLocation = {
-                                        lat: position.coords.latitude,
-                                        lng: position.coords.longitude
-                                    };
-                                    nearestBusInfo = { bus, distance: getDistance(
-                                        userLocation.lat,
-                                        userLocation.lng,
-                                        bus.currentLocation[0],
-                                        bus.currentLocation[1]
-                                    ), eta: Math.round((getDistance(
-                                        userLocation.lat,
-                                        userLocation.lng,
-                                        bus.currentLocation[0],
-                                        bus.currentLocation[1]
-                                    ) / bus.speed) * 60) };
-                                    requestBusStop();
-                                },
-                                handleLocationError
-                            );
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Not Supported',
-                                text: 'Geolocation is not supported by your browser',
-                            });
-                        }
-                    }
-                });
-                return;
-            }
-            
-            nearestBusInfo = { 
-                bus, 
-                distance: getDistance(
-                    userLocation.lat,
-                    userLocation.lng,
-                    bus.currentLocation[0],
-                    bus.currentLocation[1]
-                ),
-                eta: Math.round((getDistance(
-                    userLocation.lat,
-                    userLocation.lng,
-                    bus.currentLocation[0],
-                    bus.currentLocation[1]
-                ) / bus.speed) * 60)
-            };
-            requestBusStop();
-        }
-
-        // Search for buses based on selected route
-        document.getElementById('search-btn').addEventListener('click', function() {
-            const from = document.getElementById('from-input').value;
-            const to = document.getElementById('to-input').value;
-            
-            if (from === to) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Route',
-                    text: 'Origin and destination cannot be the same',
-                });
-                return;
-            }
-            
-            const routeKey = `${from}-${to}`;
-            const reverseRouteKey = `${to}-${from}`;
-            
-            // Find matching routes
-            if (allBusRoutes[routeKey]) {
-                currentBusRoutes = allBusRoutes[routeKey];
-            } else if (allBusRoutes[reverseRouteKey]) {
-                // If reverse route exists, use it but swap from/to
-                currentBusRoutes = JSON.parse(JSON.stringify(allBusRoutes[reverseRouteKey]));
-                currentBusRoutes.forEach(bus => {
-                    // Swap from/to
-                    const temp = bus.from;
-                    bus.from = bus.to;
-                    bus.to = temp;
-                    
-                    // Reverse the route array
-                    bus.route = [...bus.route].reverse();
-                });
-            } else {
-                currentBusRoutes = [];
-            }
-            
-            if (currentBusRoutes.length > 0) {
-                // Update page title
-                document.title = `${from} to ${to} Bus Tracker`;
-                
-                // Update the heading
-                document.querySelector('h1').textContent = `${from} to ${to} Bus Tracker`;
-                
-                // Display the buses
-                displayBuses(currentBusRoutes);
-            } else {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'No Buses Found',
-                    text: `No bus routes found between ${from} and ${to}`,
-                });
-            }
-        });
-
-        // Initial load - show Kottayam to Trivandrum by default
-        currentBusRoutes = allBusRoutes['Kottayam-Trivandrum'] || [];
-        displayBuses(currentBusRoutes);
-    </script>
+    <script type="module" src="operator.js"></script>
 </body>
 </html>
