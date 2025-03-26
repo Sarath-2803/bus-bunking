@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kottayam-Trivandrum Bus Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        #map { height: 400px; }
+        .bus-marker { background-color: #3b82f6; width: 12px; height: 12px; border-radius: 50%; }
+        .stop-marker { background-color: #ef4444; width: 10px; height: 10px; border-radius: 50%; }
+        .delay-pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-2">Kottayam to Trivandrum Bus Tracker</h1>
+        <p class="text-center text-gray-600 mb-8">Current time: <span id="current-time" class="font-medium"></span></p>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-gray-700 mb-2">From</label>
+                    <input type="text" id="from-input" class="w-full p-2 border rounded-lg" value="Kottayam" readonly>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">To</label>
+                    <input type="text" id="to-input" class="w-full p-2 border rounded-lg" value="Trivandrum" readonly>
+                </div>
+                <div class="flex items-end">
+                    <button id="refresh-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2">
+                <div id="map" class="rounded-lg shadow-md"></div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4">Available Buses</h2>
+                <div id="loading" class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p class="mt-2">Loading bus information...</p>
+                </div>
+                <div id="no-results" class="text-center py-8 hidden">
+                    <p>No buses available at this time</p>
+                </div>
+                <div id="results-container" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Initialize map centered on Kerala
+        const map = L.map('map').setView([9.5916, 76.5222], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Kottayam to Trivandrum bus data
+        const busRoutes = [
+            {
+                id: 'B1',
+                number: 'KL-15-2020',
+                type: 'Super Fast',
+                from: 'Kottayam',
+                to: 'Trivandrum',
+                route: ['Kottayam', 'Changanassery', 'Kollam', 'Trivandrum'],
+                schedule: ['06:00', '08:30', '12:00', '15:30', '18:00'],
+                currentLocation: [9.5916, 76.5222], // Kottayam coordinates
+                nextStop: 'Changanassery',
+                duration: '3h 30m',
+                delay: 0,
+                status: 'on_time',
+                capacity: 45,
+                fare: 120
+            },
+            {
+                id: 'B2',
+                number: 'KL-01-4567',
+                type: 'Express',
+                from: 'Kottayam',
+                to: 'Trivandrum',
+                route: ['Kottayam', 'Ettumanoor', 'Adoor', 'Trivandrum'],
+                schedule: ['07:15', '10:00', '13:45', '16:30', '19:15'],
+                currentLocation: [9.67, 76.56], // Between Kottayam and Ettumanoor
+                nextStop: 'Ettumanoor',
+                duration: '4h',
+                delay: 15,
+                status: 'delayed',
+                capacity: 52,
+                fare: 100
+            },
+            {
+                id: 'B3',
+                number: 'KL-05-7890',
+                type: 'Deluxe',
+                from: 'Kottayam',
+                to: 'Trivandrum',
+                route: ['Kottayam', 'Pala', 'Pathanamthitta', 'Trivandrum'],
+                schedule: ['05:45', '09:15', '14:00', '17:45'],
+                currentLocation: [9.71, 76.68], // Near Pathanamthitta
+                nextStop: 'Pathanamthitta',
+                duration: '4h 15m',
+                delay: 30,
+                status: 'delayed',
+                capacity: 36,
+                fare: 150
+            }
+        ];
+
+        // Map markers
+        const markers = {
+            buses: {},
+            stops: {}
+        };
+
+        // Update current time display
+        function updateCurrentTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = 
+                now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        }
+        setInterval(updateCurrentTime, 1000);
+        updateCurrentTime();
+
+        // Calculate arrival time at Trivandrum
+        function calculateArrivalTime(bus) {
+            const now = new Date();
+            const [hours, minutes] = bus.schedule[0].split(':').map(Number);
+            
+            // Find next departure time
+            let nextDeparture = new Date();
+            nextDeparture.setHours(hours, minutes, 0, 0);
+            
+            // If departure is tomorrow
+            if (nextDeparture < now) {
+                nextDeparture.setDate(nextDeparture.getDate() + 1);
+            }
+            
+            // Calculate arrival time
+            const [durHours, durMinutes] = bus.duration.match(/\d+/g).map(Number);
+            const arrivalTime = new Date(nextDeparture);
+            arrivalTime.setHours(arrivalTime.getHours() + durHours);
+            arrivalTime.setMinutes(arrivalTime.getMinutes() + durMinutes + bus.delay);
+            
+            return arrivalTime.toLocaleTimeString('en-IN', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+
+        // Display buses with arrival times
+        function displayBuses() {
+            const container = document.getElementById('results-container');
+            const loading = document.getElementById('loading');
+            const noResults = document.getElementById('no-results');
+            
+            container.innerHTML = '';
+            loading.classList.remove('hidden');
+            noResults.classList.add('hidden');
+            
+            // Simulate API delay
+            setTimeout(() => {
+                loading.classList.add('hidden');
+                
+                if (busRoutes.length === 0) {
+                    noResults.classList.remove('hidden');
+                    return;
+                }
+                
+                busRoutes.forEach(bus => {
+                    const arrivalTime = calculateArrivalTime(bus);
+                    
+                    const busCard = document.createElement('div');
+                    busCard.className = `bg-gray-50 p-4 rounded-lg ${bus.status === 'delayed' ? 'border border-orange-300 delay-pulse' : ''}`;
+                    
+                    busCard.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-lg">${bus.number}</h3>
+                                <p class="text-gray-600">${bus.type}</p>
+                                <div class="mt-2">
+                                    <span class="inline-block ${bus.status === 'delayed' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'} text-xs px-2 py-1 rounded">
+                                        ${bus.status === 'delayed' ? `Delayed by ${bus.delay} min` : 'On time'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold">₹${bus.fare}</p>
+                                <p class="text-sm text-gray-500">${bus.capacity} seats</p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <p class="text-sm text-gray-500">Next Stop</p>
+                                <p class="font-medium">${bus.nextStop}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Arrival at Trivandrum</p>
+                                <p class="font-medium">${arrivalTime}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium" 
+                                    onclick="showBusDetails('${bus.id}')">
+                                View Full Route & Schedule
+                            </button>
+                        </div>
+                    `;
+                    
+                    container.appendChild(busCard);
+                });
+                
+                // Plot buses on map
+                plotBusesOnMap(busRoutes);
+                
+            }, 800);
+        }
+
+        // Plot buses and stops on map
+        function plotBusesOnMap(buses) {
+            // Clear existing markers
+            Object.values(markers.buses).forEach(marker => map.removeLayer(marker));
+            Object.values(markers.stops).forEach(marker => map.removeLayer(marker));
+            markers.buses = {};
+            markers.stops = {};
+            
+            // Add bus markers
+            buses.forEach(bus => {
+                const marker = L.marker(bus.currentLocation, {
+                    icon: L.divIcon({
+                        className: 'bus-marker',
+                        iconSize: [12, 12]
+                    })
+                }).addTo(map);
+                
+                marker.bindPopup(`
+                    <b>Bus ${bus.number}</b><br>
+                    ${bus.type}<br>
+                    To: ${bus.to}<br>
+                    Next: ${bus.nextStop}<br>
+                    Status: ${bus.status === 'delayed' ? `Delayed by ${bus.delay} min` : 'On time'}
+                `);
+                
+                markers.buses[bus.id] = marker;
+            });
+            
+            // Add stop markers (simplified for demo)
+            const allStops = [...new Set(buses.flatMap(bus => bus.route))];
+            allStops.forEach((stop, index) => {
+                // Distribute stops along the path for demo purposes
+                const stopCoords = [
+                    8.5 + (index * 0.4),
+                    76.5 + (index * 0.4)
+                ];
+                
+                const marker = L.marker(stopCoords, {
+                    icon: L.divIcon({
+                        className: 'stop-marker',
+                        iconSize: [10, 10]
+                    })
+                }).addTo(map);
+                
+                marker.bindPopup(`<b>${stop}</b>`);
+                markers.stops[stop] = marker;
+            });
+            
+            // Fit map to show all markers
+            const allMarkers = [...Object.values(markers.buses), ...Object.values(markers.stops)];
+            const group = new L.featureGroup(allMarkers);
+            map.fitBounds(group.getBounds());
+        }
+
+        // Show detailed bus information
+        window.showBusDetails = function(busId) {
+            const bus = busRoutes.find(b => b.id === busId);
+            if (!bus) return;
+            
+            const arrivalTime = calculateArrivalTime(bus);
+            
+            Swal.fire({
+                title: `Bus ${bus.number} Details`,
+                html: `
+                    <div class="text-left">
+                        <p><b>Type:</b> ${bus.type}</p>
+                        <p><b>Route:</b> ${bus.from} → ${bus.to}</p>
+                        <p><b>Current Location:</b> Approaching ${bus.nextStop}</p>
+                        <p><b>Status:</b> ${bus.status === 'delayed' ? 
+                            `<span class="text-orange-600">Delayed by ${bus.delay} minutes</span>` : 
+                            '<span class="text-green-600">On time</span>'}</p>
+                        
+                        <div class="mt-4">
+                            <h4 class="font-bold mb-2">Estimated Arrival at Trivandrum:</h4>
+                            <p class="text-xl font-medium">${arrivalTime}</p>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h4 class="font-bold mb-2">Full Route:</h4>
+                            <ol class="list-decimal pl-5">
+                                ${bus.route.map(stop => `<li>${stop}</li>`).join('')}
+                            </ol>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h4 class="font-bold mb-2">Schedule:</h4>
+                            <p>${bus.schedule.join(', ')}</p>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'Close'
+            });
+        }
+
+        // Initial load
+        displayBuses();
+        
+        // Refresh button
+        document.getElementById('refresh-btn').addEventListener('click', displayBuses);
+    </script>
+</body>
+</html>
